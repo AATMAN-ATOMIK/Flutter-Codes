@@ -1,0 +1,75 @@
+class _ImageHomeScreenState extends State<ImageHomeScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+FileDownloader().updates.listen((update) {
+      switch (update) {
+        case TaskStatusUpdate _:
+        switch (update.status) {
+          case TaskStatus.complete:
+            print('Task ${update.task.taskId} success!');
+
+          case TaskStatus.canceled:
+            print('Download was canceled');
+
+          case TaskStatus.paused:
+            print('Download was paused');
+
+          default:
+            print('Download not successful');
+        }
+
+        case TaskProgressUpdate _:
+        // process the TaskProgressUpdate, e.g.
+        print(update);
+      }
+    });
+    super.initState();
+  }
+
+
+  void download() async {
+    // Use .download to start a download and wait for it to complete
+
+    var dir = await getDownloadsDirectory();
+// define the download task (subset of parameters shown)
+    final task = DownloadTask(
+        url: '${img.text}',
+        updates: Updates.statusAndProgress,
+        requiresWiFi: false,
+        retries: 5,
+        allowPause: true,
+        metaData: 'data for me');
+
+    // configure notification for all tasks
+    FileDownloader().configureNotification(
+        running: TaskNotification('Downloading', 'file: {filename}'),
+        complete: TaskNotification('Download finished', 'file: {filename}'),
+        progressBar: true
+    );
+
+
+// Start download, and wait for result. Show progress and status changes
+// while downloading
+    final result = await FileDownloader().download(task,
+        onProgress: (progress) => print('Progress: ${progress * 100}%'),
+        onStatus: (status) => print('Status: $status'));
+
+
+// Act on the result
+    switch (result.status) {
+      case TaskStatus.complete:
+        print('Success!');
+
+      case TaskStatus.canceled:
+        print('Download was canceled');
+
+      case TaskStatus.paused:
+        print('Download was paused');
+
+      default:
+        print('Download not successful');
+    }
+}
+}
